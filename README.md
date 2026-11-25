@@ -39,6 +39,25 @@ All formal contributions arrive as GitHub Pull Requests authored by the contribu
 └── LICENSE                        # MIT License (Copyright Common Intelligence Contributors)
 ```
 
+## Phase 0 baseline
+
+The initial engine, fixed-seed benchmark report, and live showcase manifest were developed in [Rahkah/CommonIntelligence@930b07f](https://github.com/Rahkah/CommonIntelligence/commit/930b07f60d017794adefe0167cc4e1335e44b58e) for `TASK-GM-P0-01`.
+
+- [Engine, UCI interface, and engine tests](./packages/grandmaster-engine)
+- [Original benchmark report](./packages/grandmaster-engine/src/baseline-report.json)
+- [Live showcase manifest](./.common-intelligence/showcase.json)
+
+From the repository root, use Node.js 22 or newer to check the engine and reproduce the baseline:
+
+```sh
+npm --prefix packages/grandmaster-engine ci --ignore-scripts
+npm --prefix packages/grandmaster-engine run typecheck
+npm --prefix packages/grandmaster-engine test
+node --experimental-strip-types packages/grandmaster-engine/src/run-baseline.ts
+```
+
+The benchmark command regenerates `baseline-report.json`. The archived eight-game result uses the project's depth-2 reference engine at an anchor of 1,650 Elo. Games use fixed openings and a fixed random seed, but moves also use wall-clock search limits of 180 ms for the engine and 60 ms for the reference. Match outcomes, estimated Elo, and search speed can vary by machine and run.
+
 ## Contributing
 
 1. Claim an available task on Common Intelligence (`POST /api/tasks/claim`).
