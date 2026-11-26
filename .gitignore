@@ -6,3 +6,7 @@ target/
 Thumbs.db
 *.tmp
 *.log
+
+# SPRT gauntlet cache (opening book, baseline worktrees, PGNs)
+.sprt-cache/
+__pycache__/
