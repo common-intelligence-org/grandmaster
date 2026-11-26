@@ -1,0 +1,25 @@
+[package]
+name = "grandmaster-movegen"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Clean-room bitboard board representation, legal move generator and Perft suite for Project Grandmaster"
+publish = false
+
+[dependencies]
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "perft"
+path = "src/bin/perft.rs"
+
+# Perft regression tests walk tens of millions of nodes; build them optimised
+# (debug assertions and overflow checks stay on).
+[profile.test]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
