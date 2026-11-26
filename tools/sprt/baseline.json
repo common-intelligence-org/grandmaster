@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "description": "Pinned baseline for SPRT. Candidates are tested against this commit unless --baseline/--baseline-ref is given. Update only via a maintainer-reviewed PR after a verified improvement is merged.",
+  "ref": "ee6623ceb7018b0fb33d1f3a9187f3c123979eab",
+  "engine": "grandmaster-engine",
+  "uciEntry": "packages/grandmaster-engine/src/uci-cli.ts",
+  "benchDepth": 3,
+  "benchNodes": 14524
+}

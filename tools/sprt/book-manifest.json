@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "name": "UHO_Lichess_4852_v1",
+  "description": "Pinned balanced (UHO) opening book required for every Project Grandmaster SPRT.",
+  "license": "CC0-1.0",
+  "source": {
+    "repository": "https://github.com/official-stockfish/books",
+    "commit": "426eca422c202ef381a1380ada1873a7f185c4b9",
+    "path": "UHO_Lichess_4852_v1.epd.zip",
+    "url": "https://raw.githubusercontent.com/official-stockfish/books/426eca422c202ef381a1380ada1873a7f185c4b9/UHO_Lichess_4852_v1.epd.zip"
+  },
+  "archive": {
+    "sha256": "4e298f11e8acfa106babe02968f2e61582145e7874c59284690b20b9650e0e07",
+    "bytes": 42877788
+  },
+  "book": {
+    "file": "UHO_Lichess_4852_v1.epd",
+    "format": "epd",
+    "sha256": "7a7f6470615a69c6cf23d565417701d38732876f480af90d67b42abade35644a",
+    "bytes": 174889110,
+    "positions": 2632036
+  },
+  "note": "Data file of opening positions only (no engine code or weights). Not committed because it exceeds the repository's 10 MB per-file limit; `python3 tools/sprt/sprt.py fetch-book` downloads and verifies it."
+}

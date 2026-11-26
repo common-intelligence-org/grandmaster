@@ -1,0 +1,101 @@
+# Template GitHub Actions workflow for Project Grandmaster SPRT gauntlets.
+#
+# NOT active: it lives outside .github/ (a protected path). A maintainer can
+# copy it to .github/workflows/sprt.yml after review.
+#
+# - `unit` runs on every PR: SPRT math tests + deterministic bench signature.
+# - `sprt` runs on demand (workflow_dispatch) for a candidate ref against the
+#   pinned baseline in tools/sprt/baseline.json, on the pinned book, and
+#   uploads the PGN + JSON verdict as artifacts.
+# Least privilege: read-only token, no secrets, never pull_request_target.
+name: grandmaster-sprt
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['packages/grandmaster-engine/**', 'tools/sprt/**']
+  workflow_dispatch:
+    inputs:
+      candidate_ref:
+        description: Git ref/SHA of the candidate engine
+        required: true
+      bounds:
+        description: nonregression (elo0=0, elo1=2) or architecture (elo0=0, elo1=5)
+        default: nonregression
+      depth:
+        description: Fixed search depth per move (deterministic)
+        default: '3'
+      max_games:
+        description: Game cap; hitting it yields Inconclusive (never accepted)
+        default: '10000'
+      concurrency:
+        default: '4'
+
+permissions:
+  contents: read
+
+env:
+  FASTCHESS_URL: https://github.com/Disservin/fastchess/releases/download/v1.8.3-alpha/fastchess-linux-x86-64.tar
+  FASTCHESS_SHA256: 7ab4879eda78de88f210d87c04c65f9ea274d20e18d4f1745c6a3ddd8ef35d7e
+
+jobs:
+  unit:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: SPRT statistics tests
+        run: python3 -m unittest discover -s tools/sprt -p "test_*.py" -v
+      - name: Bench signature (pinned baseline must stay deterministic)
+        run: python3 tools/sprt/sprt.py bench --ref "$(jq -r .ref tools/sprt/baseline.json)" --expect "$(jq -r .benchNodes tools/sprt/baseline.json)"
+
+  sprt:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Install pinned fastchess
+        run: |
+          curl -fsSL -o fastchess.tar "$FASTCHESS_URL"
+          echo "$FASTCHESS_SHA256  fastchess.tar" | sha256sum -c -
+          tar -xf fastchess.tar
+          echo "FASTCHESS=$PWD/fastchess-linux-x86-64/fastchess" >> "$GITHUB_ENV"
+      - name: Cache pinned opening book
+        uses: actions/cache@v4
+        with:
+          path: .sprt-cache/UHO_Lichess_4852_v1.epd
+          key: book-7a7f6470615a69c6cf23d565417701d38732876f480af90d67b42abade35644a
+      - name: Fetch + verify book
+        run: python3 tools/sprt/sprt.py fetch-book
+      - name: Run SPRT
+        env:
+          CANDIDATE_REF: ${{ inputs.candidate_ref }}
+          BOUNDS: ${{ inputs.bounds }}
+          DEPTH: ${{ inputs.depth }}
+          MAX_GAMES: ${{ inputs.max_games }}
+          CONCURRENCY: ${{ inputs.concurrency }}
+        run: |
+          set +e
+          python3 tools/sprt/sprt.py run --candidate-ref "$CANDIDATE_REF" --bounds "$BOUNDS" \
+            --depth "$DEPTH" --max-games "$MAX_GAMES" --concurrency "$CONCURRENCY" \
+            --pgn sprt-out/games.pgn --out sprt-out/result.json --quiet
+          rc=$?
+          { echo '## SPRT result'; echo '```json'; cat sprt-out/result.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sprt-result
+          path: sprt-out/
